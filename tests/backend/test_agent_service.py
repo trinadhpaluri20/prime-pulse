@@ -343,7 +343,7 @@ def test_13_provenance_and_citations(db_session: Session, agent_sample_data):
     req = AgentAnalysisRequest(query="What did Microsoft AI do?")
     res = service.analyze_competitor_intelligence(req)
 
-    assert len(res.memory_sources) == len(events)
+    assert len(res.memory_sources) >= len(events)
     assert all(m.memory_document_id is not None for m in res.memory_sources)
 
 

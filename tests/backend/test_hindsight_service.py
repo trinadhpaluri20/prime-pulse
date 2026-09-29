@@ -7,7 +7,7 @@ from app.utils.errors import ValidationErrorException, AppException
 
 def test_hindsight_not_configured():
     """Test service behavior when HINDSIGHT_API_KEY is not configured."""
-    service = HindsightMemoryService(api_key=None)
+    service = HindsightMemoryService(api_key="")
     assert service.is_configured is False
 
     health = service.health_check()

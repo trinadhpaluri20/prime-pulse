@@ -7,6 +7,7 @@ from app.models.enums import EventCategory
 from app.repositories.event_repository import EventRepository
 from app.services.recall_service import RecallService
 from app.services.gemini_service import GeminiService
+from app.services.groq_service import GroqService
 from app.services.grok_service import GrokService
 from app.schemas.recall import (
     RecallQueryRequest,
@@ -35,9 +36,16 @@ class AgentService:
     ):
         self.db = db
         self.recall_service = recall_service or RecallService(db)
-        self.gemini_service = gemini_service or GeminiService()
-        self.grok_service = grok_service
+        self.groq_service = grok_service or gemini_service or GeminiService()
         self.event_repository = EventRepository(db)
+
+    @property
+    def gemini_service(self):
+        return self.groq_service
+
+    @gemini_service.setter
+    def gemini_service(self, value):
+        self.groq_service = value
 
     # =========================================================================
     # AGENT TOOLS
@@ -68,7 +76,7 @@ class AgentService:
         competitor_id: int,
         start_date: Optional[datetime] = None,
         end_date: Optional[datetime] = None,
-        category: Optional[EventCategory] = None,
+        category: Optional[str] = None,
         limit: int = 50,
     ) -> CompetitorHistoryResponse:
         """TOOL 2: Retrieve deterministic competitor historical timeline and memory provenance."""
@@ -111,8 +119,8 @@ class AgentService:
         1. Validate query input
         2. Execute Tool 1 (Recall Engine) to perform dual retrieval (DB + Hindsight)
         3. Handle missing competitor or zero records
-        4. Normalize evidence context into structured payload for Gemini
-        5. Invoke Gemini LLM with strict evidence grounding system prompt
+        4. Normalize evidence context into structured payload for Groq
+        5. Invoke Groq LLM with strict evidence grounding system prompt
         6. Attach memory provenance citations and return structured analysis
         """
         logger.info(f"[AGENT_ORCHESTRATOR] Starting analysis workflow for query: '{request.query}'")
@@ -137,42 +145,42 @@ class AgentService:
                 status="missing_competitor",
                 summary=recall_res.summary,
                 memory_status=recall_res.memory_status,
-                gemini_status="connected" if self.gemini_service.is_configured else "not_configured",
-                grok_status="connected" if self.gemini_service.is_configured else "not_configured",
+                gemini_status="connected" if self.groq_service.is_configured else "not_configured",
+                grok_status="connected" if self.groq_service.is_configured else "not_configured",
                 limitations=["Could not resolve target competitor entity from query text or parameters."],
             )
 
-        # Step 3: Format Evidence Context for Gemini LLM
+        # Step 3: Format Evidence Context for Groq LLM
         comp_name = recall_res.competitor.name if recall_res.competitor else "Unknown Competitor"
         evidence_context_str = self._build_evidence_context(comp_name, recall_res)
 
-        # Step 4: Construct Gemini System Prompt
+        # Step 4: Construct Groq System Prompt
         system_prompt = self._build_system_prompt()
 
-        # Step 5: Invoke Gemini LLM with Graceful Resilience
-        gemini_status = "connected"
+        # Step 5: Invoke Groq LLM with Graceful Resilience
+        llm_status = "connected"
         analysis_status = "success"
         limitations: List[str] = []
 
         llm_result: Dict[str, Any] = {}
 
-        if not self.gemini_service.is_configured:
-            logger.warning("[AGENT_ORCHESTRATOR] Gemini LLM is not configured (GEMINI_API_KEY missing). Falling back to recall evidence engine.")
-            gemini_status = "not_configured"
+        if not self.groq_service.is_configured:
+            logger.warning("[AGENT_ORCHESTRATOR] Groq/Gemini LLM is not configured (GROQ_API_KEY / GEMINI_API_KEY missing). Falling back to recall evidence engine.")
+            llm_status = "not_configured"
             analysis_status = "degraded"
-            limitations.append("GEMINI_API_KEY is not configured in environment. Analysis compiled via Phase 5 evidence engine.")
+            limitations.append("GROQ_API_KEY / GEMINI_API_KEY is not configured in environment. Analysis compiled via Phase 5 evidence engine.")
             llm_result = self._fallback_analysis(recall_res)
         else:
             try:
                 user_prompt = f"Query: {request.query}\n\nRetrieved Evidence Context:\n{evidence_context_str}"
-                llm_result = self.gemini_service.generate_analysis(
+                llm_result = self.groq_service.generate_analysis(
                     system_prompt=system_prompt,
                     user_prompt=user_prompt,
                 )
-                logger.info("[AGENT_ORCHESTRATOR] Gemini reasoning analysis successfully generated.")
+                logger.info("[AGENT_ORCHESTRATOR] Groq reasoning analysis successfully generated.")
             except Exception as err:
-                logger.warning(f"[AGENT_ORCHESTRATOR] Gemini API call failed: {str(err)}. Falling back to recall evidence engine.")
-                gemini_status = "unavailable"
+                logger.warning(f"[AGENT_ORCHESTRATOR] Groq API call failed: {str(err)}. Falling back to recall evidence engine.")
+                llm_status = "unavailable"
                 analysis_status = "degraded"
                 limitations.append(f"Gemini LLM service execution failed ({str(err)}). Analysis compiled via Phase 5 evidence engine.")
                 llm_result = self._fallback_analysis(recall_res)
@@ -201,8 +209,8 @@ class AgentService:
             evidence=recall_res.events,
             memory_sources=recall_res.memory_sources,
             memory_status=recall_res.memory_status,
-            gemini_status=gemini_status,
-            grok_status=gemini_status,
+            gemini_status=llm_status,
+            grok_status=llm_status,
             limitations=limitations,
         )
 

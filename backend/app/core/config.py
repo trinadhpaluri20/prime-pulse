@@ -1,14 +1,18 @@
 import os
+from pathlib import Path
 from typing import List, Optional
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+BACKEND_DIR = Path(__file__).resolve().parent.parent.parent
+ENV_FILE_PATH = BACKEND_DIR / ".env"
 
 
 class Settings(BaseSettings):
     """Application settings typed configuration."""
 
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file=(str(ENV_FILE_PATH), ".env"),
         env_file_encoding="utf-8",
         extra="ignore",
     )
@@ -37,10 +41,11 @@ class Settings(BaseSettings):
     HINDSIGHT_BANK_ID: str = Field(default="competitive-intelligence")
     HINDSIGHT_TIMEOUT_SECONDS: float = Field(default=10.0)
 
-    # Google GenAI Gemini Configuration (Phase 6)
-    GEMINI_API_KEY: Optional[str] = Field(default=None)
-    GEMINI_MODEL: str = Field(default="gemini-2.5-flash")
-    GEMINI_TIMEOUT_SECONDS: float = Field(default=15.0)
+    # Groq LLM Configuration
+    GROQ_API_KEY: Optional[str] = Field(default=None)
+    GROQ_BASE_URL: str = Field(default="https://api.groq.com/openai/v1")
+    GROQ_MODEL: str = Field(default="openai/gpt-oss-120b")
+    GROQ_TIMEOUT_SECONDS: float = Field(default=15.0)
 
     # Legacy / Alternate Provider Placeholders
     XAI_API_KEY: Optional[str] = Field(default=None)
@@ -63,11 +68,28 @@ class Settings(BaseSettings):
         return bool(self.HINDSIGHT_API_KEY and self.HINDSIGHT_API_KEY.strip())
 
     @property
-    def is_gemini_configured(self) -> bool:
-        """Returns True if valid GEMINI_API_KEY is configured."""
-        if not self.GEMINI_API_KEY or not self.GEMINI_API_KEY.strip():
+    def is_groq_configured(self) -> bool:
+        """Returns True if valid GROQ_API_KEY is configured."""
+        if not self.GROQ_API_KEY or not self.GROQ_API_KEY.strip():
             return False
-        return self.GEMINI_API_KEY.strip() != "YOUR_GOOGLE_AI_STUDIO_API_KEY"
+        return self.GROQ_API_KEY.strip() != "YOUR_GROQ_API_KEY"
+
+    # Backwards compatibility properties
+    @property
+    def GEMINI_API_KEY(self) -> Optional[str]:
+        return self.GROQ_API_KEY
+
+    @property
+    def GEMINI_MODEL(self) -> str:
+        return self.GROQ_MODEL
+
+    @property
+    def GEMINI_TIMEOUT_SECONDS(self) -> float:
+        return self.GROQ_TIMEOUT_SECONDS
+
+    @property
+    def is_gemini_configured(self) -> bool:
+        return self.is_groq_configured
 
     @property
     def is_xai_configured(self) -> bool:

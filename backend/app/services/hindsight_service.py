@@ -1,3 +1,4 @@
+import concurrent.futures
 import logging
 from datetime import datetime
 from typing import Any, Dict, List, Optional
@@ -18,10 +19,10 @@ class HindsightMemoryService:
         bank_id: Optional[str] = None,
         timeout: Optional[float] = None,
     ):
-        self.base_url = base_url or settings.HINDSIGHT_BASE_URL
-        self.api_key = api_key or settings.HINDSIGHT_API_KEY
-        self.bank_id = bank_id or settings.HINDSIGHT_BANK_ID
-        self.timeout = timeout or settings.HINDSIGHT_TIMEOUT_SECONDS
+        self.base_url = base_url if base_url is not None else settings.HINDSIGHT_BASE_URL
+        self.api_key = api_key if api_key is not None else settings.HINDSIGHT_API_KEY
+        self.bank_id = bank_id if bank_id is not None else settings.HINDSIGHT_BANK_ID
+        self.timeout = timeout if timeout is not None else settings.HINDSIGHT_TIMEOUT_SECONDS
 
         self._client: Optional[Hindsight] = None
 
@@ -45,7 +46,7 @@ class HindsightMemoryService:
         return self._client
 
     def health_check(self) -> Dict[str, Any]:
-        """Perform a safe health check on Hindsight connectivity."""
+        """Perform a safe health check on Hindsight connectivity with strict timeout protection."""
         if not self.is_configured:
             return {
                 "status": "not_configured",
@@ -53,22 +54,56 @@ class HindsightMemoryService:
                 "message": "HINDSIGHT_API_KEY is missing.",
             }
 
-        try:
+        def _execute_hindsight_ping() -> Dict[str, Any]:
             client = self.get_client()
-            # Attempt a minimal test query to verify API connectivity
+            # Ensure target memory bank exists on Hindsight Cloud
+            try:
+                client.create_bank(
+                    bank_id=self.bank_id,
+                    name=f"Memory Bank for {self.bank_id}",
+                )
+            except Exception as bank_err:
+                logger.debug(
+                    f"[SAFE_DIAGNOSTIC] create_bank info | ErrorType: {type(bank_err).__name__} | Detail: {str(bank_err)}"
+                )
+
+            # Minimal test query to verify API connectivity
             client.recall(bank_id=self.bank_id, query="ping", max_tokens=10)
             return {
                 "status": "connected",
                 "bank_id": self.bank_id,
                 "base_url": self.base_url,
             }
-        except Exception as err:
-            logger.warning(f"Hindsight health check failed: {str(err)}")
+
+        effective_timeout = float(self.timeout) if self.timeout else 10.0
+
+        try:
+            with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+                future = executor.submit(_execute_hindsight_ping)
+                return future.result(timeout=effective_timeout)
+        except concurrent.futures.TimeoutError:
+            logger.warning(
+                f"[SAFE_DIAGNOSTIC] Hindsight health check timed out after {effective_timeout}s"
+            )
             return {
                 "status": "connection_failed",
                 "bank_id": self.bank_id,
                 "base_url": self.base_url,
-                "error": "Failed to reach Hindsight API.",
+                "error": f"Hindsight API check timed out after {effective_timeout}s.",
+            }
+        except Exception as err:
+            err_type = type(err).__name__
+            status_code = getattr(err, "status_code", getattr(err, "status", "N/A"))
+            raw_msg = str(err)
+            sanitized_msg = raw_msg.replace(self.api_key, "[MASKED_KEY]") if self.api_key else raw_msg
+            logger.warning(
+                f"[SAFE_DIAGNOSTIC] Hindsight health check failed | Operation: recall | ErrorType: {err_type} | HTTPStatus: {status_code} | Detail: {sanitized_msg}"
+            )
+            return {
+                "status": "connection_failed",
+                "bank_id": self.bank_id,
+                "base_url": self.base_url,
+                "error": f"Hindsight API check failed ({err_type}).",
             }
 
     def ensure_bank(

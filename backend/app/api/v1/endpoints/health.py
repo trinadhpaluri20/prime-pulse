@@ -11,7 +11,7 @@ router = APIRouter()
 
 @router.get("/health", summary="Health Check", response_model=Dict[str, Any])
 def health_check(db: Session = Depends(get_db)) -> Dict[str, Any]:
-    """Check API, database, and Hindsight persistent memory health status."""
+    """Check API, database, Hindsight persistent memory, and Gemini LLM health status."""
     # Database status
     db_status = "disconnected"
     try:
@@ -25,6 +25,9 @@ def health_check(db: Session = Depends(get_db)) -> Dict[str, Any]:
     hindsight_health = hindsight_service.health_check()
     hindsight_status = hindsight_health.get("status", "unknown")
 
+    # Groq LLM status
+    groq_status = "configured" if settings.is_groq_configured else "not_configured"
+
     overall_status = "healthy"
     if db_status != "connected":
         overall_status = "degraded"
@@ -37,4 +40,6 @@ def health_check(db: Session = Depends(get_db)) -> Dict[str, Any]:
         "environment": settings.APP_ENV,
         "database": db_status,
         "hindsight": hindsight_status,
+        "groq": groq_status,
+        "gemini": groq_status,
     }

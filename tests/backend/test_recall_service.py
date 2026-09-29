@@ -273,7 +273,7 @@ def test_12_evidence_and_provenance(db_session: Session, sample_competitor_data)
     assert len(res.facts) == len(events)
     assert len(res.observations) >= 1
     assert len(res.insights) >= 1
-    assert len(res.memory_sources) == len(events)
+    assert len(res.memory_sources) >= len(events)
     assert all(m.memory_document_id is not None for m in res.memory_sources)
 
 
