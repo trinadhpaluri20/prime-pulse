@@ -1,0 +1,43 @@
+version: '3.8'
+
+# Competitive Intelligence Agent - Docker Compose Foundation
+# Note: Services will be implemented and configured in subsequent phases.
+
+services:
+  # Planned FastAPI Backend Service (Phase 2+)
+  # backend:
+  #   build:
+  #     context: ./backend
+  #     dockerfile: Dockerfile
+  #   ports:
+  #     - "${BACKEND_PORT:-8000}:8000"
+  #   environment:
+  #     - DATABASE_URL=${DATABASE_URL}
+  #     - HINDSIGHT_BASE_URL=${HINDSIGHT_BASE_URL}
+  #     - HINDSIGHT_API_KEY=${HINDSIGHT_API_KEY}
+  #     - LLM_API_KEY=${LLM_API_KEY}
+  #   env_file:
+  #     - .env
+
+  # Planned React Frontend Service (Phase 7+)
+  # frontend:
+  #   build:
+  #     context: ./frontend
+  #     dockerfile: Dockerfile
+  #   ports:
+  #     - "${FRONTEND_PORT:-3000}:3000"
+  #   env_file:
+  #     - .env
+
+  # Planned Database Service (Phase 2+)
+  # db:
+  #   image: postgres:15-alpine
+  #   environment:
+  #     POSTGRES_DB: competitive_intelligence
+  #     POSTGRES_USER: user
+  #     POSTGRES_PASSWORD: password
+  #   ports:
+  #     - "5432:5432"
+
+volumes:
+  db_data:
