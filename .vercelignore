@@ -1,0 +1,5 @@
+.git
+.venv
+backend/.venv
+frontend/node_modules
+*.log

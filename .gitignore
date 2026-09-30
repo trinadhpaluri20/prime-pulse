@@ -81,3 +81,8 @@ htmlcov/
 # Local Scratch / Temp
 scratch/
 tmp/
+
+.vercel
+.vercel_python_packages/
+.vercel
+_uv/

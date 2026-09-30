@@ -36,6 +36,16 @@ async def lifespan(app: FastAPI):
     if settings.is_sqlite:
         logger.info("Verifying database schema initialization...")
         Base.metadata.create_all(bind=engine)
+        try:
+            from app.models.competitor import Competitor
+            from app.database.session import SessionLocal
+            with SessionLocal() as db:
+                if db.query(Competitor).count() == 0:
+                    logger.info("Database is empty, automatically seeding initial intelligence data...")
+                    from app.database.seed import seed_database
+                    seed_database(reset=False)
+        except Exception as seed_err:
+            logger.warning(f"Could not auto-seed database: {seed_err}")
 
     yield
 

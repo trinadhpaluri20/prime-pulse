@@ -5,10 +5,10 @@
 
 export const API_URL = 
   import.meta.env.VITE_API_URL || 
-  (import.meta.env.VITE_API_BASE_URL ? `${import.meta.env.VITE_API_BASE_URL}/api` : 'http://localhost:8000/api');
+  (import.meta.env.VITE_API_BASE_URL ? `${import.meta.env.VITE_API_BASE_URL}/api` : (import.meta.env.PROD ? '/api' : 'http://localhost:8000/api'));
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
-const API_PREFIX = `${BASE_URL}/api/v1`;
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || (import.meta.env.PROD ? '' : 'http://localhost:8000');
+const API_PREFIX = BASE_URL ? `${BASE_URL}/api/v1` : '/api/v1';
 
 /**
  * Robust fetch wrapper with timeout and json parsing.
