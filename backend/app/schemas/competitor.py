@@ -1,19 +1,22 @@
 from datetime import datetime
 from typing import Optional, List
-from pydantic import BaseModel, ConfigDict, Field, HttpUrl
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class CompetitorBase(BaseModel):
     """Base competitor attributes."""
 
-    name: str = Field(..., min_length=1, max_length=255, json_schema_extra={"example": "Acme Corp"})
+    name: str = Field(..., min_length=1, max_length=255, json_schema_extra={"example": "Competitor A"})
     description: Optional[str] = Field(
-        default=None, json_schema_extra={"example": "Leading enterprise AI solution provider"}
+        default=None, json_schema_extra={"example": "Enterprise AI intelligence provider"}
     )
-    industry: Optional[str] = Field(default=None, json_schema_extra={"example": "Enterprise Software"})
     website: Optional[str] = Field(
-        default=None, json_schema_extra={"example": "https://acme.example.com"}
+        default=None, json_schema_extra={"example": "https://competitor-a.ai"}
     )
+    status: Optional[str] = Field(
+        default="active", json_schema_extra={"example": "active"}
+    )
+    industry: Optional[str] = Field(default=None, json_schema_extra={"example": "Enterprise AI"})
 
 
 class CompetitorCreate(CompetitorBase):
@@ -27,8 +30,9 @@ class CompetitorUpdate(BaseModel):
 
     name: Optional[str] = Field(default=None, min_length=1, max_length=255)
     description: Optional[str] = Field(default=None)
-    industry: Optional[str] = Field(default=None)
     website: Optional[str] = Field(default=None)
+    status: Optional[str] = Field(default=None)
+    industry: Optional[str] = Field(default=None)
 
 
 class CompetitorResponse(CompetitorBase):
@@ -42,10 +46,7 @@ class CompetitorResponse(CompetitorBase):
 
 
 class CompetitorListResponse(BaseModel):
-    """Paginated list of competitors."""
+    """List of competitors response."""
 
     items: List[CompetitorResponse]
     total: int
-    page: int
-    page_size: int
-    total_pages: int

@@ -37,6 +37,8 @@ export default function EventsTimelineView({ competitors }) {
     importance: 'medium',
   });
 
+  const [selectedImportance, setSelectedImportance] = useState('');
+
   useEffect(() => {
     fetchAllEvents();
   }, [selectedCompId]);
@@ -44,24 +46,28 @@ export default function EventsTimelineView({ competitors }) {
   const fetchAllEvents = async () => {
     setLoading(true);
     try {
-      if (selectedCompId) {
-        const data = await apiService.getCompetitorEvents(selectedCompId, 1, 100);
-        setEvents(data.items || []);
-      } else if (competitors && competitors.length > 0) {
-        // Aggregate top events across competitors
-        const allEventsProms = competitors.slice(0, 5).map(c => 
-          apiService.getCompetitorEvents(c.id, 1, 20).catch(() => ({ items: [] }))
-        );
-        const results = await Promise.all(allEventsProms);
-        const combined = results.flatMap(r => r.items || []);
-        // Sort descending by event_date
-        combined.sort((a, b) => new Date(b.event_date) - new Date(a.event_date));
-        setEvents(combined);
-      } else {
-        setEvents([]);
+      let items = [];
+      try {
+        items = await apiService.getAllEvents({ 
+          competitorId: selectedCompId || undefined, 
+          limit: 200, 
+          sortOrder: 'desc' 
+        });
+      } catch {
+        if (selectedCompId) {
+          const data = await apiService.getCompetitorEvents(selectedCompId, 1, 100);
+          items = data.items || [];
+        } else if (competitors && competitors.length > 0) {
+          const proms = competitors.map(c => apiService.getCompetitorEvents(c.id, 1, 20).catch(() => ({ items: [] })));
+          const results = await Promise.all(proms);
+          items = results.flatMap(r => r.items || []);
+          items.sort((a, b) => new Date(b.event_date) - new Date(a.event_date));
+        }
       }
+      setEvents(items || []);
     } catch (err) {
       console.error(err);
+      setEvents([]);
     } finally {
       setLoading(false);
     }
@@ -110,20 +116,23 @@ export default function EventsTimelineView({ competitors }) {
 
   const categories = [
     { id: '', label: 'All Categories' },
-    { id: 'product', label: 'Product' },
-    { id: 'pricing', label: 'Pricing' },
+    { id: 'product', label: 'Product & Features' },
+    { id: 'pricing', label: 'Pricing & Packaging' },
+    { id: 'hiring', label: 'Hiring & Talent' },
+    { id: 'leadership', label: 'Leadership Moves' },
     { id: 'partnership', label: 'Partnership' },
-    { id: 'funding', label: 'Funding' },
-    { id: 'strategy', label: 'Strategy' },
+    { id: 'funding', label: 'Funding & Capital' },
+    { id: 'strategy', label: 'Strategy & Pivot' },
     { id: 'other', label: 'Other' },
   ];
 
   const filteredEvents = events.filter((ev) => {
     const matchesCat = !selectedCategory || ev.category?.toLowerCase() === selectedCategory.toLowerCase();
+    const matchesImp = !selectedImportance || ev.importance?.toLowerCase() === selectedImportance.toLowerCase();
     const matchesSearch = !searchTerm || 
       ev.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
       ev.description.toLowerCase().includes(searchTerm.toLowerCase());
-    return matchesCat && matchesSearch;
+    return matchesCat && matchesImp && matchesSearch;
   });
 
   return (
@@ -135,7 +144,7 @@ export default function EventsTimelineView({ competitors }) {
           <div>
             <h2 style={{ fontSize: '1.3rem', fontWeight: 800, color: '#ffffff', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <Calendar size={22} color="#34d399" />
-              <span>Market Signals & Intelligence Timeline</span>
+              <span>Historical Intelligence Timeline</span>
             </h2>
             <p style={{ fontSize: '0.85rem', color: '#94a3b8', marginTop: '0.2rem' }}>
               Chronological market events dual-persisted across relational DB & Hindsight memory banks
@@ -171,6 +180,19 @@ export default function EventsTimelineView({ competitors }) {
               {categories.map((cat) => (
                 <option key={cat.id} value={cat.id}>{cat.label}</option>
               ))}
+            </select>
+          </div>
+
+          <div>
+            <label style={{ fontSize: '0.78rem', color: '#94a3b8', fontWeight: 600, display: 'block', marginBottom: '0.35rem' }}>
+              Importance Level
+            </label>
+            <select className="form-select" value={selectedImportance} onChange={(e) => setSelectedImportance(e.target.value)}>
+              <option value="">All Importance Levels</option>
+              <option value="critical">🔴 Critical</option>
+              <option value="high">🟠 High</option>
+              <option value="medium">🟡 Medium</option>
+              <option value="low">🟢 Low</option>
             </select>
           </div>
 

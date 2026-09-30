@@ -18,7 +18,7 @@ class Settings(BaseSettings):
     )
 
     # Core Application Settings
-    APP_NAME: str = Field(default="Competitive Intelligence Agent API")
+    APP_NAME: str = Field(default="Competitive Intern API")
     APP_ENV: str = Field(default="development")
     BACKEND_HOST: str = Field(default="0.0.0.0")
     BACKEND_PORT: int = Field(default=8000)
@@ -28,9 +28,15 @@ class Settings(BaseSettings):
         default="sqlite:///./competitive_intelligence.db"
     )
 
-    # CORS Settings
+    # Frontend and CORS Settings
+    FRONTEND_URL: str = Field(default="http://localhost:3000")
     CORS_ORIGINS: List[str] = Field(
-        default=["http://localhost:3000", "http://127.0.0.1:3000"]
+        default=[
+            "http://localhost:3000",
+            "http://127.0.0.1:3000",
+            "http://localhost:5173",
+            "http://127.0.0.1:5173",
+        ]
     )
 
     # Hindsight Persistent Memory Configuration

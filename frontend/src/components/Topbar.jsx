@@ -40,14 +40,14 @@ export default function Topbar({ activeRoute, setActiveRoute, health, setIsMobil
 
   const getPageTitle = () => {
     switch (activeRoute) {
-      case 'overview': return { title: 'Executive Overview', sub: 'High-level competitive signals, memory stats & recent activity' };
-      case 'competitors': return { title: 'Competitor Intelligence Profiles', sub: 'Manage tracked competitor entities and market signals' };
-      case 'events': return { title: 'Intelligence Timeline & Events', sub: 'Chronological market events with category filters' };
-      case 'analysis': return { title: 'Groq AI Strategy Workspace', sub: 'Evidence-grounded reasoning over persistent Hindsight memories' };
-      case 'recall': return { title: 'Historical Intelligence Recall', sub: 'Natural language search across long-term competitor history' };
-      case 'analytics': return { title: 'Strategic Analytics & Signal Visualizer', sub: 'Quantitative distribution & competitor activity velocity' };
-      case 'health': return { title: 'System Infrastructure Health', sub: 'Real-time telemetry for DB, Hindsight memory & Groq LLM' };
-      default: return { title: 'Competitive Intelligence Agent', sub: 'AI-Powered Strategic Intelligence' };
+      case 'overview': return { title: 'Dashboard Overview', sub: 'High-level competitive signals, memory stats & strategic metrics' };
+      case 'timeline': 
+      case 'events': return { title: 'Historical Timeline', sub: 'Chronological market events dual-persisted across DB and Hindsight memory' };
+      case 'insights': 
+      case 'analysis': return { title: 'AI Insights / Pattern Detection', sub: 'Automated pattern detection & evidence-grounded strategic reasoning' };
+      case 'chat': return { title: 'AI Chat with Hindsight Memory', sub: 'Conversational strategic Q&A with dual vector and relational memory grounding' };
+      case 'alerts': return { title: 'Smart Alerts', sub: 'Real-time threat monitoring, price drop alerts & watchlist triggers' };
+      default: return { title: 'Competitive Intern', sub: 'AI Strategic Intelligence Platform' };
     }
   };
 

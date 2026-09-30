@@ -91,14 +91,14 @@ export default function AIAnalysisWorkspaceView({ initialCompetitor, competitors
         
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.25rem' }}>
           <div style={{ padding: '0.65rem', background: 'rgba(99, 102, 241, 0.2)', borderRadius: '12px', color: '#a5b4fc' }}>
-            <Bot size={28} />
+            <BrainCircuit size={28} />
           </div>
           <div>
             <h2 style={{ fontSize: '1.4rem', fontWeight: 800, color: '#ffffff' }}>
-              Gemini AI Strategy Reasoning Workspace
+              AI Insights / Pattern Detection
             </h2>
             <p style={{ fontSize: '0.85rem', color: '#94a3b8' }}>
-              Evidence-grounded competitive intelligence synthesis using <code style={{ color: '#a5b4fc' }}>gemini-2.5-flash</code> & Hindsight memory
+              Automated pattern detection & evidence-grounded strategic reasoning backed by Hindsight persistent memory
             </p>
           </div>
         </div>

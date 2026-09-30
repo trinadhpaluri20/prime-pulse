@@ -1,13 +1,10 @@
 import React from 'react';
 import { 
   LayoutDashboard, 
-  Building2, 
-  Calendar, 
-  Bot, 
-  History, 
-  Activity, 
-  BrainCircuit,
-  BarChart3,
+  Clock, 
+  BrainCircuit, 
+  MessageSquare, 
+  AlertTriangle, 
   LogOut,
   User as UserIcon
 } from 'lucide-react';
@@ -18,13 +15,11 @@ export default function Sidebar({ activeRoute, setActiveRoute, isOpen, setIsOpen
   const { user, logout } = useAuth();
 
   const navItems = [
-    { id: 'overview', label: 'Overview', icon: LayoutDashboard },
-    { id: 'competitors', label: 'Competitors', icon: Building2 },
-    { id: 'events', label: 'Events & Timeline', icon: Calendar },
-    { id: 'analysis', label: 'AI Analysis Workspace', icon: Bot, badge: 'Groq LLM' },
-    { id: 'recall', label: 'Historical Recall', icon: History },
-    { id: 'analytics', label: 'Signal Analytics', icon: BarChart3 },
-    { id: 'health', label: 'System Health', icon: Activity },
+    { id: 'overview', label: 'Dashboard', icon: LayoutDashboard, emoji: '🏠' },
+    { id: 'timeline', label: 'Timeline', icon: Clock, emoji: '🕒' },
+    { id: 'insights', label: 'AI Insights', icon: BrainCircuit, emoji: '🧠' },
+    { id: 'chat', label: 'AI Chat', icon: MessageSquare, emoji: '💬' },
+    { id: 'alerts', label: 'Smart Alerts', icon: AlertTriangle, emoji: '⚠️' },
   ];
 
   return (
@@ -51,8 +46,8 @@ export default function Sidebar({ activeRoute, setActiveRoute, isOpen, setIsOpen
 
         {/* Navigation Section */}
         <div className="sidebar-nav flex-1">
-          <div style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', padding: '0.75rem 0.9rem 0.25rem' }}>
-            Main Workspace
+          <div style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', padding: '0.75rem 0.9rem 0.35rem' }}>
+            Intelligence Workspace
           </div>
 
           {navItems.map((item) => {
@@ -66,11 +61,12 @@ export default function Sidebar({ activeRoute, setActiveRoute, isOpen, setIsOpen
                   setIsOpen(false);
                 }}
                 className={`nav-item ${active ? 'active' : ''}`}
+                style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}
               >
-                <Icon size={18} color={active ? '#a5b4fc' : '#94a3b8'} />
-                <span>{item.label}</span>
+                <span style={{ fontSize: '1.05rem', lineHeight: 1 }}>{item.emoji}</span>
+                <span style={{ fontSize: '0.86rem', fontWeight: active ? 700 : 500, flex: 1 }}>{item.label}</span>
                 {item.badge && (
-                  <span className="nav-badge">{item.badge}</span>
+                  <span className="nav-badge" style={{ fontSize: '0.65rem' }}>{item.badge}</span>
                 )}
               </button>
             );
@@ -141,21 +137,6 @@ export default function Sidebar({ activeRoute, setActiveRoute, isOpen, setIsOpen
               </button>
             </div>
           )}
-
-          <div style={{
-            padding: '0.75rem',
-            background: 'rgba(15, 23, 42, 0.7)',
-            borderRadius: '10px',
-            border: '1px solid rgba(255, 255, 255, 0.06)'
-          }}>
-            <div style={{ display: 'flex', items: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
-              <BrainCircuit size={15} color="#34d399" />
-              <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#34d399' }}>Hindsight Persistent Memory</span>
-            </div>
-            <div style={{ fontSize: '0.7rem', color: '#94a3b8', lineHeight: 1.4 }}>
-              Dual relational & vector memory bank active
-            </div>
-          </div>
         </div>
 
       </aside>

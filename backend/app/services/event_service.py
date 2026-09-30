@@ -1,6 +1,6 @@
 import math
 import logging
-from typing import Optional
+from typing import Optional, List
 from sqlalchemy.orm import Session
 from app.core.config import settings
 from app.models.competitor_event import CompetitorEvent
@@ -211,3 +211,20 @@ class EventService:
         if not event:
             raise NotFoundError("CompetitorEvent", event_id)
         self.event_repository.delete(event)
+
+    def search_all_events(
+        self,
+        competitor_id: Optional[int] = None,
+        category: Optional[str] = None,
+        keyword: Optional[str] = None,
+        limit: int = 100,
+        sort_order: str = "desc",
+    ) -> List[CompetitorEvent]:
+        """Search events across all competitors with optional filters."""
+        return self.event_repository.search_events(
+            competitor_id=competitor_id,
+            category=category,
+            keyword=keyword,
+            limit=limit,
+            sort_order=sort_order,
+        )

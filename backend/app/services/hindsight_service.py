@@ -146,15 +146,35 @@ class HindsightMemoryService:
 
         client = self.get_client()
         try:
-            response = client.retain(
-                bank_id=self.bank_id,
-                content=content,
-                context=context,
-                timestamp=timestamp,
-                metadata=metadata,
-                document_id=document_id,
-                tags=tags,
-            )
+            import asyncio
+            try:
+                loop = asyncio.get_running_loop()
+            except RuntimeError:
+                loop = None
+
+            if loop is not None:
+                with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+                    future = executor.submit(
+                        client.retain,
+                        bank_id=self.bank_id,
+                        content=content,
+                        context=context,
+                        timestamp=timestamp,
+                        metadata=metadata,
+                        document_id=document_id,
+                        tags=tags,
+                    )
+                    response = future.result(timeout=float(self.timeout) if self.timeout else 10.0)
+            else:
+                response = client.retain(
+                    bank_id=self.bank_id,
+                    content=content,
+                    context=context,
+                    timestamp=timestamp,
+                    metadata=metadata,
+                    document_id=document_id,
+                    tags=tags,
+                )
             return {
                 "status": "retained",
                 "bank_id": self.bank_id,
@@ -182,12 +202,29 @@ class HindsightMemoryService:
 
         client = self.get_client()
         try:
-            response = client.recall(
-                bank_id=self.bank_id,
-                query=query,
-                types=types,
-                tags=tags,
-            )
+            import asyncio
+            try:
+                loop = asyncio.get_running_loop()
+            except RuntimeError:
+                loop = None
+
+            if loop is not None:
+                with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+                    future = executor.submit(
+                        client.recall,
+                        bank_id=self.bank_id,
+                        query=query,
+                        types=types,
+                        tags=tags,
+                    )
+                    response = future.result(timeout=float(self.timeout) if self.timeout else 10.0)
+            else:
+                response = client.recall(
+                    bank_id=self.bank_id,
+                    query=query,
+                    types=types,
+                    tags=tags,
+                )
 
             # Parse results safely
             parsed_results = []

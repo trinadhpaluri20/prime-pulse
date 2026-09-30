@@ -56,7 +56,10 @@ def client(db_session: Session) -> Generator[TestClient, None, None]:
         finally:
             pass
 
+    from app.database.session import get_db as get_db_primary
+
     app.dependency_overrides[get_db] = _override_get_db
+    app.dependency_overrides[get_db_primary] = _override_get_db
     with TestClient(app) as test_client:
         yield test_client
     app.dependency_overrides.clear()

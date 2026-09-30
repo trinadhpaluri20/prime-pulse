@@ -1,3 +1,4 @@
+from typing import Optional, List
 from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.orm import Session
 from app.db.session import get_db
@@ -10,6 +11,32 @@ from app.schemas.event import (
 )
 
 router = APIRouter()
+
+
+@router.get(
+    "/events",
+    response_model=List[CompetitorEventResponse],
+    status_code=status.HTTP_200_OK,
+    summary="Search & List All Competitor Events",
+    description="Retrieve events across all competitors, filterable by category, competitor_id, keyword, limit, sort_order.",
+)
+def list_all_events(
+    competitor_id: Optional[int] = Query(default=None, description="Filter by competitor ID"),
+    category: Optional[str] = Query(default=None, description="Filter by event category"),
+    keyword: Optional[str] = Query(default=None, description="Filter by keyword"),
+    limit: int = Query(default=100, ge=1, le=500, description="Max number of items"),
+    sort_order: str = Query(default="desc", pattern="^(asc|desc)$", description="Sort order by date"),
+    db: Session = Depends(get_db),
+) -> List[CompetitorEventResponse]:
+    service = EventService(db)
+    events = service.search_all_events(
+        competitor_id=competitor_id,
+        category=category,
+        keyword=keyword,
+        limit=limit,
+        sort_order=sort_order,
+    )
+    return [CompetitorEventResponse.model_validate(e) for e in events]
 
 
 @router.post(
